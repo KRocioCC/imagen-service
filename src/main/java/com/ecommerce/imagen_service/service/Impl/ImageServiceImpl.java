@@ -1,4 +1,4 @@
-package com.ecommerce.imagen_service.service.impl;
+package com.ecommerce.imagen_service.service.Impl;
 
 import com.ecommerce.imagen_service.dto.ImageResponse;
 import com.ecommerce.imagen_service.model.ImageMetadata;
@@ -10,6 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import io.minio.GetObjectArgs;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import java.time.Instant;
 import java.util.Set;
@@ -75,6 +79,35 @@ public class ImageServiceImpl implements ImageService {
         );
     }
 
+    @Override
+    public ResponseEntity<InputStreamResource> getImage(String imageId) {
+        ImageMetadata metadata = imageMetadataRepository.findById(imageId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Imagen no encontrada: " + imageId)
+                );
+
+        try {
+            InputStreamResource resource = new InputStreamResource(
+                    minioClient.getObject(
+                            GetObjectArgs.builder()
+                                    .bucket(bucket)
+                                    .object(metadata.getObjectKey())
+                                    .build()
+                    )
+            );
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(metadata.getContentType()))
+                    .contentLength(metadata.getSize())
+                    .body(resource);
+
+        } catch (Exception exception) {
+            throw new IllegalStateException(
+                    "No se pudo obtener la imagen desde MinIO",
+                    exception
+            );
+        }
+    }
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Debes enviar una imagen.");
