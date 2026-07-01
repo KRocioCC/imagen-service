@@ -10,4 +10,8 @@ public interface ImageService {
     ImageResponse upload(MultipartFile file);
 
     ResponseEntity<InputStreamResource> getImage(String imageId);
+
+    //Eliminar la imagen del bucket y de la base de datos
+    void deleteImage(String imageId);
+
 }

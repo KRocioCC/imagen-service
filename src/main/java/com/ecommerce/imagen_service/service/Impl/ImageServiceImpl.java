@@ -15,6 +15,7 @@ import io.minio.GetObjectArgs;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import io.minio.RemoveObjectArgs;
 
 import java.time.Instant;
 import java.util.Set;
@@ -109,6 +110,32 @@ public class ImageServiceImpl implements ImageService {
             );
         }
     }
+    //Metodo para eliminar la imagen del bucket y de la base de datos
+    @Override
+    public void deleteImage(String imageId) {
+        ImageMetadata metadata = imageMetadataRepository.findById(imageId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Imagen", "id", imageId)
+                );
+
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(metadata.getObjectKey())
+                            .build()
+            );
+
+            imageMetadataRepository.delete(metadata);
+
+        } catch (Exception exception) {
+            throw new IllegalStateException(
+                    "No se pudo eliminar la imagen de MinIO",
+                    exception
+            );
+        }
+    }
+
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Debes enviar una imagen.");
