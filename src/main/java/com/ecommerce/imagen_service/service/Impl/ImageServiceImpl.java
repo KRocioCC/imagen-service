@@ -1,6 +1,7 @@
 package com.ecommerce.imagen_service.service.Impl;
 
 import com.ecommerce.imagen_service.dto.ImageResponse;
+import com.ecommerce.imagen_service.exception.ResourceNotFoundException;
 import com.ecommerce.imagen_service.model.ImageMetadata;
 import com.ecommerce.imagen_service.repository.ImageMetadataRepository;
 import com.ecommerce.imagen_service.service.ImageService;
@@ -83,7 +84,7 @@ public class ImageServiceImpl implements ImageService {
     public ResponseEntity<InputStreamResource> getImage(String imageId) {
         ImageMetadata metadata = imageMetadataRepository.findById(imageId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Imagen no encontrada: " + imageId)
+                        new ResourceNotFoundException("Imagen", "id", imageId)
                 );
 
         try {
